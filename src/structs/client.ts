@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger'
-import { Client, ClientOptions, GatewayIntentBits } from 'discord.js'
+import { ApplicationCommandType, Client, ClientOptions, GatewayIntentBits } from 'discord.js'
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
@@ -23,6 +23,18 @@ export function bootstrap(workdir: PathLike, options: Partial<ClientOptions> = {
 
         const slashCommand = collectionStorage.slashCommands.get(interaction.commandName)
         logger.log(`Received command: ${interaction.commandName}`)
+
+        if (!slashCommand) {
+            await interaction.reply({ content: 'Command not found', ephemeral: true })
+            return
+        }
+
+        try {
+            await slashCommand.execute(interaction as any)
+        } catch (error) {
+            logger.error(`Error executing command: ${interaction.commandName}`, error)
+            await interaction.reply({ content: 'An error occurred while executing the command.', ephemeral: true })
+        }
     })
 
     client.once('ready', async (client) => {
@@ -94,7 +106,9 @@ async function registerSlashCommands(client: Client<true>) {
         return
     }
 
-    const guildCommands = collectionStorage.slashCommands.map((command) => command.data.toJSON())
+    const guildCommands = collectionStorage.slashCommands.map((command) => command)
+    console.log({ guildCommands })
+
     await guild.commands.set(guildCommands).then(commands => {
         logger.success(`└ ${commands.size} ${commands.size === 1 ? 'command' : 'commands'} registered in ${guild.name} (${guild.id}) guild successfully!`)
     })
