@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger'
-import { ApplicationCommandType, Client, ClientOptions, GatewayIntentBits, messageLink } from 'discord.js'
+import { Client, ClientOptions, GatewayIntentBits, MessageFlags } from 'discord.js'
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
@@ -59,15 +59,14 @@ function createClient(token: string, options: BootstrapOptions): Client {
 
     client.on('messageCreate', async (message) => {
         if (message.author.bot) return
-        if (!message.content.split(' ')[0].startsWith('!')) return
 
-        const messageCommand = collectionStorage.messageCommands.get(message.content)
-        logger.log(`Received message: ${message.content}`)
+        const commandNameWithPrefix = message.content.split(' ')[0]
+        if (!commandNameWithPrefix.startsWith('!')) return
 
-        if (!messageCommand) {
-            await message.reply('Command not found')
-            return
-        }
+        const commandName = commandNameWithPrefix.replace('!', '')
+        const messageCommand = collectionStorage.messageCommands.get(commandName)
+        if (!messageCommand)
+            return await message.reply('Command not found')
 
         try {
             await messageCommand.execute(message)

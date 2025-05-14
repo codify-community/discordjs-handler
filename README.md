@@ -3,7 +3,10 @@
 ## Todo
 
 - [ ] Add support for events
-- [ ] Add support for message commands
+- [ ] Add support for autocomplete
+- [ ] Add support for buttons
+- [ ] Add support for select menus
+- [ ] Add support for modals
 
 ## Done
 
@@ -12,3 +15,4 @@
 - [X] Guild slash commands sync
 - [X] Add collection storage for commands, events and config
 - [X] Add support for slash commands
+- [X] Add support for message commands

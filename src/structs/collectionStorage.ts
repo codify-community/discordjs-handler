@@ -1,5 +1,6 @@
 import { Collection } from "discord.js"
 import { GenericSlashCommandData } from "./slashCommand"
+import { MessageCommandData } from "./messageCommand"
 
 /**
  * @description This object stores collections of commands and events.
@@ -10,6 +11,6 @@ import { GenericSlashCommandData } from "./slashCommand"
 */
 export const collectionStorage = {
     slashCommands: new Collection<string, GenericSlashCommandData>(),
-    messageCommands: new Collection(),
+    messageCommands: new Collection<string, MessageCommandData>(),
     events: new Collection(),
 }

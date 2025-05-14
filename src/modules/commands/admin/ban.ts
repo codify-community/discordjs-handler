@@ -1,4 +1,5 @@
 import { createSlashCommand } from "@/structs/slashCommand"
+import { createMessageCommand } from "@/structs/messageCommand"
 import { logger } from "@/utils/logger"
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, MessageFlags } from "discord.js"
 
@@ -31,5 +32,22 @@ createSlashCommand({
 
         logger.log(`Banning user ${user.tag} (${user.id}) for reason: ${reason}`);
         await interaction.reply({ content: `Banning user ${user.tag} for reason: ${reason}`, flags: MessageFlags.Ephemeral });
+    },
+})
+
+createMessageCommand({
+    name: "ban",
+    async execute(message) {
+        const args = message.content.split(" ").slice(1);
+        const userId = args[0];
+        const reason = args.slice(1).join(" ") || "No reason provided.";
+
+        if (!userId) {
+            await message.reply("User ID not provided.");
+            return;
+        }
+
+        logger.log(`Banning user with ID ${userId} for reason: ${reason}`);
+        await message.reply(`Banning user with ID ${userId} for reason: ${reason}`);
     },
 })
