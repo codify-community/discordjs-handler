@@ -4,16 +4,16 @@ import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
 import { collectionStorage } from './collectionStorage'
+import chalk from 'chalk'
 
 interface BootstrapOptions extends Partial<ClientOptions> {
     workdir: PathLike
 }
 
 /**
- * @description This function initializes a Discord client and loads modules from the specified directory.
- * @param {PathLike} workdir - The directory to load modules from.
- * @param {Partial<ClientOptions>} options - Optional client options.
- * @returns {{ client: Client }} - The initialized Discord client.
+ * @description This function bootstraps a Discord client with the specified options.
+ * @param {BootstrapOptions} options - The options for bootstrapping the client.
+ * @returns {{ client: Client }} - The created Discord client.
  */
 export function bootstrap(options: BootstrapOptions): { client: Client } {
     const client = createClient(env.DISCORD_TOKEN, options)
@@ -25,8 +25,9 @@ export function bootstrap(options: BootstrapOptions): { client: Client } {
 }
 
 /**
- * @description This function creates a new Discord client with the specified options.
- * @param {Partial<ClientOptions>} options - Optional client options.
+ * @description This function creates a Discord client with the specified token and options.
+ * @param {string} token - The Discord bot token.
+ * @param {BootstrapOptions} options - The options for creating the client.
  * @returns {Client} - The created Discord client.
  */
 function createClient(token: string, options: BootstrapOptions): Client {
@@ -44,19 +45,15 @@ function createClient(token: string, options: BootstrapOptions): Client {
     client.on('interactionCreate', async interaction => {
         if (!interaction.isCommand()) return
 
-        const slashCommand = collectionStorage.commands.get(interaction.commandName)
-        logger.log(`Received command: ${interaction.commandName}`)
-
-        if (!slashCommand) {
-            await interaction.reply({ content: 'Command not found', ephemeral: true })
-            return
-        }
+        const slashCommand = collectionStorage.slashCommands.get(interaction.commandName)
+        if (!slashCommand)
+            return await interaction.reply({ content: 'Command not found', flags: MessageFlags.Ephemeral })
 
         try {
             await slashCommand.execute(interaction as any)
         } catch (error) {
             logger.error(`Error executing command: ${interaction.commandName}`, error)
-            await interaction.reply({ content: 'An error occurred while executing the command.', ephemeral: true })
+            await interaction.reply({ content: 'An error occurred while executing the command.', flags: MessageFlags.Ephemeral })
         }
     })
 
@@ -84,7 +81,7 @@ function createClient(token: string, options: BootstrapOptions): Client {
 }
 
 /**
- * @description This function loads modules from the specified directory and registers them with the client.
+ * @description This function loads modules from the specified directory.
  * @param {PathLike} workdir - The directory to load modules from.
  */
 function loadModules(workdir: PathLike) {
@@ -111,7 +108,7 @@ function loadModules(workdir: PathLike) {
     files.forEach(file => {
         try {
             require(file)
-            logger.success(`Loaded module: ${file.replace(modulesPath, '')}`)
+            logger.success(`Module loaded: ${chalk.blueBright(`"${file.replace(modulesPath, '').slice(1)}"`)}`)
         } catch (error) {
             logger.error(`Failed to load module: ${file.replace(modulesPath, '')}`, error)
         }
@@ -119,19 +116,23 @@ function loadModules(workdir: PathLike) {
 }
 
 /**
- * @description This function registers slash commands with the Discord API.
- * @param {Client<true>} client - The Discord client.
+ * @description This function registers slash commands in the specified guild.
+ * @param {Client} client - The Discord client.
  */
 async function registerSlashCommands(client: Client<true>) {
-    const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID)
-
-    if (!guild) {
-        logger.error('Guild not found')
-        return
+    function plural(size: number) {
+        return size === 1 ? '' : 's'
     }
 
-    const guildCommands = collectionStorage.commands.map((command) => command)
+    const guild = client.guilds.cache.get(env.DISCORD_GUILD_ID)
+    if (!guild)
+        return logger.error('Guild not found')
+
+    logger.log(`Registering slash commands in ${guild.name} guild:`)
+    const guildCommands = collectionStorage.slashCommands.map((slashCommand) => slashCommand)
     await guild.commands.set(guildCommands).then(commands => {
-        logger.success(`└ ${commands.size} ${commands.size === 1 ? 'command' : 'commands'} registered in ${guild.name} (${guild.id}) guild successfully!`)
+        logger.success(`└ ${commands.size} {/} command${plural(commands.size)} registered in ${guild.name} guild successfully!`)
+    }).catch(error => {
+        logger.error(`Failed to register {/} commands in ${guild.name} guild`, error)
     })
 }

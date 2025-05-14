@@ -18,7 +18,7 @@ type ApplicationCommandData<
             execute(interaction: ChatInputCommandInteraction<Cache<D>>): Promise<void>
         } : never
 
-export type CommandData<
+export type SlashCommandData<
     Name extends string,
     DmPermission extends boolean,
     Type extends CommandType
@@ -27,16 +27,16 @@ export type CommandData<
     dmPermission?: DmPermission;
 }
 
-export type GenericCommandData = CommandData<any, any, any>;
+export type GenericSlashCommandData = SlashCommandData<any, any, any>;
 
 export function createSlashCommand<
     Name extends string = string,
     DmPermission extends boolean = false,
     Type extends CommandType = ApplicationCommandType.ChatInput
->(data: CommandData<Name, DmPermission, Type>) {
+>(data: SlashCommandData<Name, DmPermission, Type>) {
     data.type ??= ApplicationCommandType.ChatInput as Type
     data.dmPermission ??= false as DmPermission
 
-    collectionStorage.commands.set(data.name, data)
-    logger.log(`Slash command ${data.name} registered.`)
+    collectionStorage.slashCommands.set(data.name, data)
+    logger.log(`{/} ${data.name} command registered`)
 }

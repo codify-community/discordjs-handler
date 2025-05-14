@@ -1,6 +1,6 @@
-import { createSlashCommand } from "@/structs/command";
-import { logger } from "@/utils/logger";
-import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, MessageFlags } from "discord.js";
+import { createSlashCommand } from "@/structs/slashCommand"
+import { logger } from "@/utils/logger"
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, MessageFlags } from "discord.js"
 
 createSlashCommand({
     name: "ban",
