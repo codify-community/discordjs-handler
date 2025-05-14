@@ -1,3 +1,5 @@
 import { bootstrap } from './structs/client'
 
-bootstrap('../modules', {})
+bootstrap({
+    workdir: '../modules',
+})

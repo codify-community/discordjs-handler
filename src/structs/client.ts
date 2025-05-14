@@ -1,9 +1,13 @@
 import { logger } from '@/utils/logger'
-import { ApplicationCommandType, Client, ClientOptions, GatewayIntentBits } from 'discord.js'
+import { ApplicationCommandType, Client, ClientOptions, GatewayIntentBits, messageLink } from 'discord.js'
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
 import { collectionStorage } from './collectionStorage'
+
+interface BootstrapOptions extends Partial<ClientOptions> {
+    workdir: PathLike
+}
 
 /**
  * @description This function initializes a Discord client and loads modules from the specified directory.
@@ -11,17 +15,36 @@ import { collectionStorage } from './collectionStorage'
  * @param {Partial<ClientOptions>} options - Optional client options.
  * @returns {{ client: Client }} - The initialized Discord client.
  */
-export function bootstrap(workdir: PathLike, options: Partial<ClientOptions> = {}): { client: Client } {
-    const client = createClient(options)
-    client.token = env.DISCORD_TOKEN
+export function bootstrap(options: BootstrapOptions): { client: Client } {
+    const client = createClient(env.DISCORD_TOKEN, options)
 
+    loadModules(options.workdir)
     client.login()
-    loadModules(workdir)
+
+    return { client }
+}
+
+/**
+ * @description This function creates a new Discord client with the specified options.
+ * @param {Partial<ClientOptions>} options - Optional client options.
+ * @returns {Client} - The created Discord client.
+ */
+function createClient(token: string, options: BootstrapOptions): Client {
+    const client = new Client({
+        intents: options.intents ?? [GatewayIntentBits.Guilds],
+        partials: options.partials ?? [],
+    })
+    client.token = token
+
+    client.once('ready', async (client) => {
+        logger.success(`Logged in as ${client.user?.tag}`)
+        await registerSlashCommands(client)
+    })
 
     client.on('interactionCreate', async interaction => {
         if (!interaction.isCommand()) return
 
-        const slashCommand = collectionStorage.slashCommands.get(interaction.commandName)
+        const slashCommand = collectionStorage.commands.get(interaction.commandName)
         logger.log(`Received command: ${interaction.commandName}`)
 
         if (!slashCommand) {
@@ -37,23 +60,24 @@ export function bootstrap(workdir: PathLike, options: Partial<ClientOptions> = {
         }
     })
 
-    client.once('ready', async (client) => {
-        logger.success(`Logged in as ${client.user?.tag}`)
-        await registerSlashCommands(client)
-    })
+    client.on('messageCreate', async (message) => {
+        if (message.author.bot) return
+        if (!message.content.split(' ')[0].startsWith('!')) return
 
-    return { client }
-}
+        const messageCommand = collectionStorage.messageCommands.get(message.content)
+        logger.log(`Received message: ${message.content}`)
 
-/**
- * @description This function creates a new Discord client with the specified options.
- * @param {Partial<ClientOptions>} options - Optional client options.
- * @returns {Client} - The created Discord client.
- */
-function createClient(options: Partial<ClientOptions>): Client {
-    const client = new Client({
-        intents: options.intents ?? [GatewayIntentBits.Guilds],
-        partials: options.partials ?? [],
+        if (!messageCommand) {
+            await message.reply('Command not found')
+            return
+        }
+
+        try {
+            await messageCommand.execute(message)
+        } catch (error) {
+            logger.error(`Error executing message command: ${message.content}`, error)
+            await message.reply('An error occurred while executing the command.')
+        }
     })
 
     return client
@@ -106,9 +130,7 @@ async function registerSlashCommands(client: Client<true>) {
         return
     }
 
-    const guildCommands = collectionStorage.slashCommands.map((command) => command)
-    console.log({ guildCommands })
-
+    const guildCommands = collectionStorage.commands.map((command) => command)
     await guild.commands.set(guildCommands).then(commands => {
         logger.success(`└ ${commands.size} ${commands.size === 1 ? 'command' : 'commands'} registered in ${guild.name} (${guild.id}) guild successfully!`)
     })

@@ -37,6 +37,6 @@ export function createSlashCommand<
     data.type ??= ApplicationCommandType.ChatInput as Type
     data.dmPermission ??= false as DmPermission
 
-    collectionStorage.slashCommands.set(data.name, data)
+    collectionStorage.commands.set(data.name, data)
     logger.log(`Slash command ${data.name} registered.`)
 }
