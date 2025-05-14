@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger'
-import { ApplicationCommand, Client, ClientOptions, GatewayIntentBits } from 'discord.js'
+import { Client, ClientOptions, GatewayIntentBits } from 'discord.js'
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
