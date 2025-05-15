@@ -5,6 +5,7 @@ import fs, { PathLike } from 'fs'
 import { env } from '@/env'
 import { collectionStorage } from './collectionStorage'
 import chalk from 'chalk'
+import { registerEventHandlers } from './event'
 
 interface BootstrapOptions extends Partial<ClientOptions> {
     workdir: PathLike
@@ -19,6 +20,8 @@ export function bootstrap(options: BootstrapOptions): { client: Client } {
     const client = createClient(env.DISCORD_TOKEN, options)
 
     loadModules(options.workdir)
+    registerEventHandlers(client)
+
     client.login()
 
     return { client }
