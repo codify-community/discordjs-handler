@@ -108,7 +108,7 @@ function loadModules(workdir: PathLike) {
         const shortPath = file.replace(modulesPath, '').replace(/^[\\/]/, '')
         try {
             require(file)
-            logger.success(`[${index + 1}/${files.length}] Module loaded: ${chalk.cyan(shortPath)}`)
+            logger.success(`[${index + 1}/${files.length}] Module loaded: ${chalk.blue(shortPath)}`)
         } catch (error) {
             logger.error(`[${index + 1}/${files.length}] Failed to load module: ${chalk.red(shortPath)}`, error)
         }
