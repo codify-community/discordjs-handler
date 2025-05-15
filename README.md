@@ -2,7 +2,6 @@
 
 ## Todo
 
-- [ ] Add support for autocomplete
 - [ ] Add support for buttons
 - [ ] Add support for select menus
 - [ ] Add support for modals
@@ -16,3 +15,4 @@
 - [X] Add support for slash commands
 - [X] Add support for message commands
 - [X] Add support for events
+- [X] Add support for autocomplete

@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger'
-import { Client, ClientOptions, GatewayIntentBits, MessageFlags } from 'discord.js'
+import { AutocompleteInteraction, Client, ClientOptions, CommandInteraction, GatewayIntentBits, MessageFlags } from 'discord.js'
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
@@ -46,17 +46,13 @@ function createClient(token: string, options: BootstrapOptions): Client {
     })
 
     client.on('interactionCreate', async interaction => {
-        if (!interaction.isCommand()) return
-
-        const slashCommand = collectionStorage.slashCommands.get(interaction.commandName)
-        if (!slashCommand)
-            return await interaction.reply({ content: 'Command not found', flags: MessageFlags.Ephemeral })
-
-        try {
-            await slashCommand.execute(interaction as any)
-        } catch (error) {
-            logger.error(`Error executing command: ${interaction.commandName}`, error)
-            await interaction.reply({ content: 'An error occurred while executing the command.', flags: MessageFlags.Ephemeral })
+        switch (true) {
+            case interaction.isCommand():
+                await handleSlashCommand(interaction)
+                return
+            case interaction.isAutocomplete():
+                await handleAutocomplete(interaction)
+                return
         }
     })
 
@@ -80,6 +76,37 @@ function createClient(token: string, options: BootstrapOptions): Client {
     })
 
     return client
+}
+
+/**
+ * @description This function handles slash commands.
+ * @param {CommandInteraction} interaction - The interaction object.
+ */
+async function handleSlashCommand(interaction: CommandInteraction) {
+    let slashCommand = collectionStorage.slashCommands.get(interaction.commandName)
+    if (!slashCommand)
+        return await interaction.reply({ content: 'Command not found', flags: MessageFlags.Ephemeral })
+
+    try {
+        await slashCommand.execute(interaction as any)
+    } catch (error) {
+        logger.error(`Error executing command: ${interaction.commandName}`, error)
+        await interaction.reply({ content: 'An error occurred while executing the command.', flags: MessageFlags.Ephemeral })
+    }
+}
+
+/**
+ * @description This function handles autocomplete interactions.
+ * @param {AutocompleteInteraction} interaction - The interaction object.
+ */
+async function handleAutocomplete(interaction: AutocompleteInteraction) {
+    let autocompleteCommand = collectionStorage.slashCommands.get(interaction.commandName)
+        if (autocompleteCommand && autocompleteCommand.autocomplete) {
+            const choices = await autocompleteCommand.autocomplete(interaction)
+            if (choices && Array.isArray(choices)) {
+                interaction.respond(choices.slice(0, 25))
+            }
+    }
 }
 
 /**
@@ -134,7 +161,7 @@ async function registerSlashCommands(client: Client<true>) {
     logger.log(`Registering slash commands in ${guild.name} guild:`)
     const guildCommands = collectionStorage.slashCommands.map((slashCommand) => slashCommand)
     await guild.commands.set(guildCommands).then(commands => {
-        logger.success(`└ ${commands.size} {/} command${plural(commands.size)} registered in ${guild.name} guild successfully!`)
+        logger.success(`└ {/} [${commands.size}] command${plural(commands.size)} registered in ${guild.name} guild successfully!`)
     }).catch(error => {
         logger.error(`Failed to register {/} commands in ${guild.name} guild`, error)
     })

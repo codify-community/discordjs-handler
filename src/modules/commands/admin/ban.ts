@@ -19,35 +19,43 @@ createSlashCommand({
             description: "The reason for the ban.",
             type: ApplicationCommandOptionType.String,
             required: false,
+            autocomplete: true,
         },
     ],
     async execute(interaction) {
-        const user = interaction.options.getUser("user");
-        const reason = interaction.options.getString("reason") || "No reason provided.";
+        const user = interaction.options.getUser("user")
+        const reason = interaction.options.getString("reason") || "No reason provided."
 
         if (!user) {
-            await interaction.reply({ content: "User not found.", ephemeral: true });
-            return;
+            await interaction.reply({ content: "User not found.", ephemeral: true })
+            return
         }
 
-        logger.log(`Banning user ${user.tag} (${user.id}) for reason: ${reason}`);
-        await interaction.reply({ content: `Banning user ${user.tag} for reason: ${reason}`, flags: MessageFlags.Ephemeral });
+        logger.log(`Banning user ${user.tag} (${user.id}) for reason: ${reason}`)
+        await interaction.reply({ content: `Banning user ${user.tag} for reason: ${reason}`, flags: MessageFlags.Ephemeral })
+    },
+    async autocomplete(interaction) {
+        const focusedValue = interaction.options.getFocused()
+        const choices = ["User1", "User2", "User3"]
+            .filter(choice => choice.startsWith(focusedValue))
+            .map(choice => ({ name: choice, value: choice }))
+        await interaction.respond(choices)
     },
 })
 
 createMessageCommand({
     name: "ban",
     async execute(message) {
-        const args = message.content.split(" ").slice(1);
-        const userId = args[0];
-        const reason = args.slice(1).join(" ") || "No reason provided.";
+        const args = message.content.split(" ").slice(1)
+        const userId = args[0]
+        const reason = args.slice(1).join(" ") || "No reason provided."
 
         if (!userId) {
             await message.reply("User ID not provided.");
-            return;
+            return
         }
 
-        logger.log(`Banning user with ID ${userId} for reason: ${reason}`);
-        await message.reply(`Banning user with ID ${userId} for reason: ${reason}`);
+        logger.log(`Banning user with ID ${userId} for reason: ${reason}`)
+        await message.reply(`Banning user with ID ${userId} for reason: ${reason}`)
     },
 })

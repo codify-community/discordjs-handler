@@ -1,6 +1,8 @@
-import { CacheType, ApplicationCommandType, ChatInputApplicationCommandData, ChatInputCommandInteraction } from "discord.js"
+import { CacheType, ApplicationCommandType, ChatInputApplicationCommandData, ChatInputCommandInteraction, AutocompleteInteraction, ApplicationCommandOptionChoiceData } from "discord.js"
 import { collectionStorage } from "./collectionStorage"
 import { logger } from "@/utils/logger"
+
+type AutocompleteReturn = Promise<void | undefined | readonly ApplicationCommandOptionChoiceData[]>
 
 export type CommandType = ApplicationCommandType.ChatInput
 type Cache<D extends boolean> = D extends false ? "cached" : CacheType
@@ -16,6 +18,7 @@ type ApplicationCommandData<
         ChatInputApplicationCommandData & {
             name: SlashName<N>,
             execute(interaction: ChatInputCommandInteraction<Cache<D>>): Promise<void>
+            autocomplete?(interaction: AutocompleteInteraction<Cache<D>>): AutocompleteReturn
         } : never
 
 export type SlashCommandData<
