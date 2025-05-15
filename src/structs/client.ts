@@ -104,12 +104,13 @@ function loadModules(workdir: PathLike) {
     const files = readAllFilesRecursively(modulesPath)
     logger.log(`Loading ${files.length} modules...`)
 
-    files.forEach(file => {
+    files.forEach((file, index) => {
+        const shortPath = file.replace(modulesPath, '').replace(/^[\\/]/, '')
         try {
             require(file)
-            logger.success(`Module loaded: ${chalk.blueBright(`"${file.replace(modulesPath, '').slice(1)}"`)}`)
+            logger.success(`[${index + 1}/${files.length}] Module loaded: ${chalk.cyan(shortPath)}`)
         } catch (error) {
-            logger.error(`Failed to load module: ${file.replace(modulesPath, '')}`, error)
+            logger.error(`[${index + 1}/${files.length}] Failed to load module: ${chalk.red(shortPath)}`, error)
         }
     })
 }
