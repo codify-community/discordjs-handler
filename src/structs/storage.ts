@@ -14,4 +14,5 @@ export const storage = {
     slashCommands: new Collection<string, GenericSlashCommandData>(),
     messageCommands: new Collection<string, MessageCommandData>(),
     events: new Collection<keyof ClientEvents, EventsCollection>(),
+    prefix: "!",
 }
