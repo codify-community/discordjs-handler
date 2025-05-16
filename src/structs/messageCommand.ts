@@ -1,5 +1,5 @@
 import { Message, OmitPartialGroupDMChannel } from "discord.js"
-import { collectionStorage } from "./collectionStorage"
+import { storage } from "./storage"
 import { logger } from "@/utils/logger"
 
 type CommandName<N extends string> = N
@@ -10,6 +10,6 @@ export type MessageCommandData = {
 }
 
 export function createMessageCommand(data: MessageCommandData) {
-    collectionStorage.messageCommands.set(data.name, data)
+    storage.messageCommands.set(data.name, data)
     logger.log(`{#} ${data.name} command registered`)
 }

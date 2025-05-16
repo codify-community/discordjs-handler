@@ -1,5 +1,5 @@
 import { CacheType, ApplicationCommandType, ChatInputApplicationCommandData, ChatInputCommandInteraction, AutocompleteInteraction, ApplicationCommandOptionChoiceData } from "discord.js"
-import { collectionStorage } from "./collectionStorage"
+import { storage } from "./storage"
 import { logger } from "@/utils/logger"
 
 type AutocompleteReturn = Promise<void | undefined | readonly ApplicationCommandOptionChoiceData[]>
@@ -40,6 +40,6 @@ export function createSlashCommand<
     data.type ??= ApplicationCommandType.ChatInput as Type
     data.dmPermission ??= false as DmPermission
 
-    collectionStorage.slashCommands.set(data.name, data)
+    storage.slashCommands.set(data.name, data)
     logger.log(`{/} ${data.name} command registered`)
 }

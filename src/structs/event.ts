@@ -1,5 +1,5 @@
 import { Client, ClientEvents, Collection } from "discord.js";
-import { collectionStorage } from "./collectionStorage";
+import { storage } from "./storage";
 import { logger } from "@/utils/logger";
 import chalk from "chalk";
 
@@ -16,7 +16,7 @@ type GenericEventData = EventData<keyof ClientEvents>
 export type EventsCollection = Collection<string, GenericEventData>
 
 export function registerEventHandlers(client: Client) {
-    const eventHandlers = collectionStorage.events.map((collection, event) => ({
+    const eventHandlers = storage.events.map((collection, event) => ({
         event, handlers: collection.map((e) => ({ execute: e.execute, once: e.once })),
     }))
 
@@ -41,10 +41,10 @@ export function registerEventHandlers(client: Client) {
 export function createEvent<
     EventName extends keyof ClientEvents
 >(data: EventData<EventName>) {
-    const eventCollection = collectionStorage.events.get(data.event) ?? new Collection()
+    const eventCollection = storage.events.get(data.event) ?? new Collection()
 
     eventCollection.set(data.name, data)
-    collectionStorage.events.set(data.event, eventCollection)
+    storage.events.set(data.event, eventCollection)
 
     logger.log(`{⋆} ${data.name} event registered ${chalk.blue(`(${data.event})`)}`)
 }

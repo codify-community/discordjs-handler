@@ -10,7 +10,7 @@ import { EventsCollection } from "./event"
  * - messageCommands: A collection of message commands.
  * - events: A collection of events.
 */
-export const collectionStorage = {
+export const storage = {
     slashCommands: new Collection<string, GenericSlashCommandData>(),
     messageCommands: new Collection<string, MessageCommandData>(),
     events: new Collection<keyof ClientEvents, EventsCollection>(),

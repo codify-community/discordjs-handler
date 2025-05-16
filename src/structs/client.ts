@@ -3,7 +3,7 @@ import { AutocompleteInteraction, Client, ClientOptions, CommandInteraction, Gat
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
-import { collectionStorage } from './collectionStorage'
+import { storage } from './storage'
 import chalk from 'chalk'
 import { registerEventHandlers } from './event'
 
@@ -63,7 +63,7 @@ function createClient(token: string, options: BootstrapOptions): Client {
         if (!commandNameWithPrefix.startsWith('!')) return
 
         const commandName = commandNameWithPrefix.replace('!', '')
-        const messageCommand = collectionStorage.messageCommands.get(commandName)
+        const messageCommand = storage.messageCommands.get(commandName)
         if (!messageCommand)
             return await message.reply('Command not found')
 
@@ -83,7 +83,7 @@ function createClient(token: string, options: BootstrapOptions): Client {
  * @param {CommandInteraction} interaction - The interaction object.
  */
 async function handleSlashCommand(interaction: CommandInteraction) {
-    let slashCommand = collectionStorage.slashCommands.get(interaction.commandName)
+    let slashCommand = storage.slashCommands.get(interaction.commandName)
     if (!slashCommand)
         return await interaction.reply({ content: 'Command not found', flags: MessageFlags.Ephemeral })
 
@@ -100,7 +100,7 @@ async function handleSlashCommand(interaction: CommandInteraction) {
  * @param {AutocompleteInteraction} interaction - The interaction object.
  */
 async function handleAutocomplete(interaction: AutocompleteInteraction) {
-    let autocompleteCommand = collectionStorage.slashCommands.get(interaction.commandName)
+    let autocompleteCommand = storage.slashCommands.get(interaction.commandName)
         if (autocompleteCommand && autocompleteCommand.autocomplete) {
             const choices = await autocompleteCommand.autocomplete(interaction)
             if (choices && Array.isArray(choices)) {
@@ -159,7 +159,7 @@ async function registerSlashCommands(client: Client<true>) {
         return logger.error('Guild not found')
 
     logger.log(`Registering slash commands in ${guild.name} guild:`)
-    const guildCommands = collectionStorage.slashCommands.map((slashCommand) => slashCommand)
+    const guildCommands = storage.slashCommands.map((slashCommand) => slashCommand)
     await guild.commands.set(guildCommands).then(commands => {
         logger.success(`└ {/} [${commands.size}] command${plural(commands.size)} registered in ${guild.name} guild successfully!`)
     }).catch(error => {
