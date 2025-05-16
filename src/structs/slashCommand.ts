@@ -1,4 +1,4 @@
-import { CacheType, ApplicationCommandType, ChatInputApplicationCommandData, ChatInputCommandInteraction, AutocompleteInteraction, ApplicationCommandOptionChoiceData } from "discord.js"
+import { CacheType, ApplicationCommandType, ChatInputApplicationCommandData, ChatInputCommandInteraction, AutocompleteInteraction, ApplicationCommandOptionChoiceData, CommandInteraction, MessageFlags } from "discord.js"
 import { storage } from "./storage"
 import { logger } from "@/utils/logger"
 
@@ -32,6 +32,10 @@ export type SlashCommandData<
 
 export type GenericSlashCommandData = SlashCommandData<any, any, any>;
 
+/**
+ * @description This function registers a slash command.
+ * @param {SlashCommandData} data - The slash command data.
+ */
 export function createSlashCommand<
     Name extends string = string,
     DmPermission extends boolean = false,
@@ -42,4 +46,21 @@ export function createSlashCommand<
 
     storage.slashCommands.set(data.name, data)
     logger.log(`{/} ${data.name} command registered`)
+}
+
+/**
+ * @description This function handles slash commands.
+ * @param {CommandInteraction} interaction - The interaction object.
+ */
+export async function handleSlashCommand(interaction: CommandInteraction) {
+    let slashCommand = storage.slashCommands.get(interaction.commandName)
+    if (!slashCommand)
+        return await interaction.reply({ content: 'Command not found', flags: MessageFlags.Ephemeral })
+
+    try {
+        await slashCommand.execute(interaction as any)
+    } catch (error) {
+        logger.error(`Error executing command: ${interaction.commandName}`, error)
+        await interaction.reply({ content: 'An error occurred while executing the command.', flags: MessageFlags.Ephemeral })
+    }
 }

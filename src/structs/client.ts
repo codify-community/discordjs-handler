@@ -1,11 +1,14 @@
 import { logger } from '@/utils/logger'
-import { AutocompleteInteraction, Client, ClientOptions, CommandInteraction, GatewayIntentBits, MessageFlags } from 'discord.js'
+import { AutocompleteInteraction, CacheType, ChatInputCommandInteraction, Client, ClientOptions, CommandInteraction, GatewayIntentBits, Message, MessageContextMenuCommandInteraction, MessageFlags, OmitPartialGroupDMChannel, UserContextMenuCommandInteraction } from 'discord.js'
 import path from 'path'
 import fs, { PathLike } from 'fs'
 import { env } from '@/env'
 import { storage } from './storage'
 import chalk from 'chalk'
 import { registerEventHandlers } from './event'
+import { isMessageCommand } from '@/utils/isMessageCommand'
+import { handleSlashCommand } from './slashCommand'
+import { handleMessageCommand } from './messageCommand'
 
 interface BootstrapOptions extends Partial<ClientOptions> {
     workdir: PathLike
@@ -57,42 +60,11 @@ function createClient(token: string, options: BootstrapOptions): Client {
     })
 
     client.on('messageCreate', async (message) => {
-        if (message.author.bot) return
-
-        const commandNameWithPrefix = message.content.split(' ')[0]
-        if (!commandNameWithPrefix.startsWith('!')) return
-
-        const commandName = commandNameWithPrefix.replace('!', '')
-        const messageCommand = storage.messageCommands.get(commandName)
-        if (!messageCommand)
-            return await message.reply('Command not found')
-
-        try {
-            await messageCommand.execute(message)
-        } catch (error) {
-            logger.error(`Error executing message command: ${message.content}`, error)
-            await message.reply('An error occurred while executing the command.')
-        }
+        if (!isMessageCommand(message)) return
+        await handleMessageCommand(message)
     })
 
     return client
-}
-
-/**
- * @description This function handles slash commands.
- * @param {CommandInteraction} interaction - The interaction object.
- */
-async function handleSlashCommand(interaction: CommandInteraction) {
-    let slashCommand = storage.slashCommands.get(interaction.commandName)
-    if (!slashCommand)
-        return await interaction.reply({ content: 'Command not found', flags: MessageFlags.Ephemeral })
-
-    try {
-        await slashCommand.execute(interaction as any)
-    } catch (error) {
-        logger.error(`Error executing command: ${interaction.commandName}`, error)
-        await interaction.reply({ content: 'An error occurred while executing the command.', flags: MessageFlags.Ephemeral })
-    }
 }
 
 /**
@@ -166,3 +138,4 @@ async function registerSlashCommands(client: Client<true>) {
         logger.error(`Failed to register {/} commands in ${guild.name} guild`, error)
     })
 }
+

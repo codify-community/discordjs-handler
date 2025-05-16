@@ -15,6 +15,14 @@ export interface EventData<
 type GenericEventData = EventData<keyof ClientEvents>
 export type EventsCollection = Collection<string, GenericEventData>
 
+type GenericEventHandler = {
+    execute: (...args: any[]) => Promise<void>
+}
+
+/**
+ * @description This function registers event handlers for the client.
+ * @param {Client} client - The Discord client.
+ */
 export function registerEventHandlers(client: Client) {
     const eventHandlers = storage.events.map((collection, event) => ({
         event, handlers: collection.map((e) => ({ execute: e.execute, once: e.once })),
@@ -24,20 +32,23 @@ export function registerEventHandlers(client: Client) {
         const onEventHandlers = handlers.filter((e) => !e.once)
         const onceEventHandlers = handlers.filter((e) => e.once)
 
-        client.on(event, (...args) => {
-            for (const handler of onEventHandlers) {
-                handler.execute(...args)
+        const registerHandlers = (handlers: GenericEventHandler[]) => {
+            return async (...args: any[]) => {
+                for (const handler of handlers) {
+                    await handler.execute(...args)
+                }
             }
-        })
+        }
 
-        client.once(event, (...args) => {
-            for (const handler of onceEventHandlers) {
-                handler.execute(...args)
-            }
-        })
+        client.on(event, registerHandlers(onEventHandlers))
+        client.once(event, registerHandlers(onceEventHandlers))
     }
 }
 
+/**
+ * @description This function creates an event.
+ * @param {EventData} data - The event data.
+ */
 export function createEvent<
     EventName extends keyof ClientEvents
 >(data: EventData<EventName>) {
