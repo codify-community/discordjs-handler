@@ -1,7 +1,7 @@
 {
-  "name": "discord-js-handler",
+  "name": "discordjs-handler",
   "version": "1.0.0",
-  "description": "Simple command handler for DiscordJS",
+  "description": "Minimal and modified version of Constatic for internal use",
   "main": "src/index.ts",
   "scripts": {
     "start": "node dist/index.js",
