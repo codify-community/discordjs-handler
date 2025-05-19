@@ -132,6 +132,11 @@ async function registerSlashCommands(client: Client<true>) {
 
     logger.log(`Registering slash commands in ${guild.name} guild:`)
     const guildCommands = storage.slashCommands.map((slashCommand) => slashCommand)
+    if (guildCommands.length === 0) {
+        logger.warn('No slash commands to register')
+        return
+    }
+
     await guild.commands.set(guildCommands).then(commands => {
         logger.success(`└ {/} [${commands.size}] command${plural(commands.size)} registered in ${guild.name} guild successfully!`)
     }).catch(error => {
