@@ -17,4 +17,4 @@
 - [X] Add support for events
 - [X] Add support for autocomplete
 
-### This project is a minimal and modified version of [Constatic](https://github.com/rinckodev/constatic) for internal use.
+This project is a minimal and modified version of [Constatic](https://github.com/rinckodev/constatic) for internal use.
